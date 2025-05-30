@@ -1,0 +1,61 @@
+title: Suspicious Code Injection
+status: experimental
+description: |
+  Detects process injection based on suspicious source/target image paths, parent-child relations, whitelists and digital signature state.
+author: kklimeshov
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  # FP и whitelists
+  filter_src_whitelist:
+    Image:
+      - '*\sythonw.exe'
+    - '*\osqueryd\osqueryd.exe'
+    - '*\SenseIR.exe'
+    - '*\Kes*\avp.exe'
+    - ... # (дополнить из WHITELIST_RE, как в Rust, по надобности)
+  filter_pid4:
+    ParentProcessId: 4
+
+  # Suspicious src (SUSPICIOUS_SOURCE_RE)
+  suspicious_src:
+    Image|re: '(?i)[a-z]:\\(programdata|users\\[^\\]+\\appdata\\(roaming|local)|program files.*|documents and settings\\[^\\]+)(\\|$)'
+  # High severity targets из HIGH_SEVERITY_TARGETS_RE
+  suspicious_dst:
+    Image|re: '(?i)\\(RegAsm|MSBuild|RegSvcs|InstallUtil|mscorsvw|ngentask|CasPol|addinprocess32|AppLaunch|winlogon|dllhost)\.exe$'
+
+  # Unsigned valid processes (UNSIGNED_VALID_PROCESSES_RE)
+  filter_unsigned_valid:
+    Image|re: '(?i)[a-z]:\\Windows\\(System32|SysWOW64)\\lsass\.exe$'
+    SignatureStatus: 'Valid'
+
+  selection:
+    - ParentImage|endswith: '\rundll32.exe'
+    - ParentImage|endswith: '\powershell.exe'
+    - ParentImage|endswith: '\cmd.exe'
+    - ParentImage|endswith: '\wscript.exe'
+    - ParentImage|endswith: '\explorer.exe'
+    - Image|endswith:
+        - '\msiexec.exe'
+        - '\winlogon.exe'
+        - '\lsass.exe'
+        - '\dllhost.exe'
+  condition: |
+    (suspicious_src or suspicious_dst or selection)
+    and not (filter_src_whitelist or filter_pid4 or filter_unsigned_valid)
+fields:
+  - Image
+  - ParentImage
+  - CommandLine
+  - ParentProcessId
+  - SignatureStatus
+  - TargetImage
+level: high
+tags:
+  - attack.t1055
+  - attack.execution
+  - process-injection
+  - group-ib.ada
+falsepositives:
+  - Legitimate system management software/internals
