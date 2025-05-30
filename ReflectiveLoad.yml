@@ -1,0 +1,30 @@
+title: Possible Reflective DLL Load
+id: ada-reflective-load-t1620
+status: experimental
+description: Possible reflective load via remote thread with null image_base and image_offset.
+author: kklimeshov
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  cmdline_whitelist:
+    CommandLine|re: '(?i)\\WINDOWS\\(system32|syswow64)\\svchost\.exe -k netsvcs -p -s Schedule$|--loader --shm-id'
+
+  reflectivethread:
+    EventID: 8
+    Win32StartAddress|gt: 0
+    ImageBase: 0
+    ImageOffset: 0
+  condition: reflectivethread and not cmdline_whitelist
+fields:
+  - Image
+  - CommandLine
+  - TargetImage
+  - Win32StartAddress
+  - ImageBase
+  - ImageOffset
+level: medium
+tags:
+  - attack.t1620
+falsepositives:
+  - System management tools or legitimate custom loaders/launchers
