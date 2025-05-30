@@ -1,0 +1,44 @@
+title: Process Hollowing Activity
+id: d42082d9-b6e7-4e1b-b68c-b8859da0c3e6
+description: >
+    Detects process injection patterns.
+status: experimental
+author: kklimeshov
+references:
+    - https://attack.mitre.org/techniques/T1055/012/
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection_parent_anomaly:
+        ParentImage|endswith:
+            - '\cmd.exe'
+            - '\powershell.exe'
+            - '\wscript.exe'
+        CommandLine|contains:
+            - 'rundll32'
+            - 'svchost.exe'
+            - 'msiexec.exe'
+    selection_injectable_name_patterns:
+        Image|endswith:
+            - '\explorer.exe'
+            - '\lsass.exe'
+            - '\winlogon.exe'
+        ParentImage|endswith:
+            - '\svchost.exe'
+            - '\rundll32.exe'
+
+    condition: 
+        selection_parent_anomaly or selection_injectable_name_patterns
+fields:
+    - ParentImage
+    - Image
+    - CommandLine
+    - ParentProcessId
+falsepositives:
+    - Software and tools with similar injection techniques (e.g., security products, sysinternals)
+level: medium
+tags:
+    - attack.t1055.012
+    - injection
+    - process-hollowing
