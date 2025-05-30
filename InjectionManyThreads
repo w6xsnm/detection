@@ -1,0 +1,26 @@
+title: Process Creates Many Threads in Other Process
+id: ada-injection-many-threads-t1055
+status: experimental
+description: Detects a process creating many remote threads in other processes in a short time (potential injection activity).
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  # whitelist процессов-источников
+  filter_src_whitelist:
+    Image|re: '(?i)[a-z]:\\Windows\\(System32|SysWOW64)\\(svchost|services|wmiprvse).exe'
+  selection:
+    EventID: 8
+  condition: selection and not filter_src_whitelist
+fields:
+  - Image
+  - TargetImage
+  - ProcessGuid
+  - User
+  - CommandLine
+level: high
+tags:
+  - attack.t1055
+  - process-injection
+falsepositives:
+  - Backup, security, and management tools may create such patterns
