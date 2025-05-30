@@ -14,18 +14,14 @@ detection:
     - '*\osqueryd\osqueryd.exe'
     - '*\SenseIR.exe'
     - '*\Kes*\avp.exe'
-    - ... # (дополнить из WHITELIST_RE, как в Rust, по надобности)
   filter_pid4:
     ParentProcessId: 4
 
-  # Suspicious src (SUSPICIOUS_SOURCE_RE)
   suspicious_src:
     Image|re: '(?i)[a-z]:\\(programdata|users\\[^\\]+\\appdata\\(roaming|local)|program files.*|documents and settings\\[^\\]+)(\\|$)'
-  # High severity targets из HIGH_SEVERITY_TARGETS_RE
   suspicious_dst:
     Image|re: '(?i)\\(RegAsm|MSBuild|RegSvcs|InstallUtil|mscorsvw|ngentask|CasPol|addinprocess32|AppLaunch|winlogon|dllhost)\.exe$'
-
-  # Unsigned valid processes (UNSIGNED_VALID_PROCESSES_RE)
+    
   filter_unsigned_valid:
     Image|re: '(?i)[a-z]:\\Windows\\(System32|SysWOW64)\\lsass\.exe$'
     SignatureStatus: 'Valid'
